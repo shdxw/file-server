@@ -14,7 +14,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class FileController {
@@ -52,7 +58,7 @@ public class FileController {
         }
 
         // Fallback to the default content type if type could not be determined
-        if(contentType == null) {
+        if (contentType == null) {
             contentType = "application/octet-stream";
         }
 
@@ -77,7 +83,7 @@ public class FileController {
         }
 
         // Fallback to the default content type if type could not be determined
-        if(contentType == null) {
+        if (contentType == null) {
             contentType = "application/octet-stream";
         }
 
@@ -89,26 +95,23 @@ public class FileController {
 
     //get files (names)
     @GetMapping("/files")
-    public ResponseEntity<Resource> getFileNames(@PathVariable String fileName, HttpServletRequest request) {
+    public List<UploadFileResponse> getFileNames(HttpServletRequest request) {
         // Load file as Resource
-        Resource resource = fileStorageService.loadFileAsResource(fileName);
-
-        // Try to determine file's content type
-        String contentType = null;
+        //Resource resource = fileStorageService.loadFileAsResource(fileName);
+        List<UploadFileResponse> res = new ArrayList<>();
         try {
-            contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
-        } catch (IOException ex) {
-            logger.info("Could not determine file type.");
+            res = Files.list(Path.of("src/main/resources/files")).map(a -> {
+                File file = a.toFile();
+                try {
+                    return new UploadFileResponse(file.getName(), Files.probeContentType(a), file.getUsableSpace());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }).collect(Collectors.toList());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        // Fallback to the default content type if type could not be determined
-        if(contentType == null) {
-            contentType = "application/octet-stream";
-        }
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
-                .body(resource);
+        return res;
     }
 }

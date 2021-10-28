@@ -8,12 +8,15 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Properties;
 
 @Service
 public class FileStorageService {
@@ -64,5 +67,17 @@ public class FileStorageService {
         } catch (MalformedURLException ex) {
             throw new MyFileNotFoundException("File not found " + fileName, ex);
         }
+    }
+
+    public static String getPropertyPath() {
+        String res = null;
+        try {
+            Properties path = new Properties();
+            path.load(new FileInputStream("src/main/resources/application.properties"));
+            res =  path.getProperty("file.upload-dir");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return res;
     }
 }

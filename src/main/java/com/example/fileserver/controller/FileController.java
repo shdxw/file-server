@@ -14,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -70,40 +69,31 @@ public class FileController {
 
     //delete file
     @DeleteMapping("/files/{fileName:.+}")
-    public ResponseEntity<Resource> deleteFile(@PathVariable String fileName, HttpServletRequest request) {
-        // Load file as Resource
-        Resource resource = fileStorageService.loadFileAsResource(fileName);
+    public ResponseEntity<?> deleteFile(@PathVariable String fileName, HttpServletRequest request) {
 
-        // Try to determine file's content type
-        String contentType = null;
+        boolean del = false;
         try {
-            contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
+            del = Files.deleteIfExists(Path.of(FileStorageService.getPropertyPath()+"/" + fileName));
         } catch (IOException ex) {
-            logger.info("Could not determine file type.");
+            logger.info("Нет файла епты.");
         }
 
-        // Fallback to the default content type if type could not be determined
-        if (contentType == null) {
-            contentType = "application/octet-stream";
+        logger.info(String.valueOf(del));
+        if (del) {
+            return ResponseEntity.noContent().build();
         }
+        return ResponseEntity.notFound().build();
 
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
-                .body(resource);
     }
 
     //get files (names)
     @GetMapping("/files")
     public List<UploadFileResponse> getFileNames(HttpServletRequest request) {
-        // Load file as Resource
-        //Resource resource = fileStorageService.loadFileAsResource(fileName);
         List<UploadFileResponse> res = new ArrayList<>();
         try {
-            res = Files.list(Path.of("src/main/resources/files")).map(a -> {
-                File file = a.toFile();
+            res = Files.list(Path.of(FileStorageService.getPropertyPath())).map(a -> {
                 try {
-                    return new UploadFileResponse(file.getName(), Files.probeContentType(a), file.getUsableSpace());
+                    return new UploadFileResponse(a.getFileName().toString(), Files.probeContentType(a), Files.size(a));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

@@ -1,0 +1,40 @@
+version: '2'
+
+services:
+  #  nginx:
+  #    build:
+  #      context: .
+  #      dockerfile: docker/nginx/Dockerfile
+  #    working_dir: /app
+  #    restart: on-failure
+  #    depends_on:
+  #      - 'app'
+  #    ports:
+  #      - "8091:8080"
+  #    environment:
+  #      NGINX_HOST: "localhost:8091"
+  #      NGINX_HTTP_PORT: "8091"
+
+  prod:
+    image: 'docker-spring-boot-postgres:latest'
+    build:
+      context: .
+      args:
+        profile: prod
+      dockerfile: Dockerfile
+    container_name: prod-container
+    restart: on-failure
+    ports:
+      - "6666:6666"
+
+  dev:
+    image: 'docker-spring-boot-postgres:latest'
+    build:
+      context: .
+      args:
+        profile: dev
+      dockerfile: Dockerfile
+    container_name: dev-container
+    restart: on-failure
+    ports:
+      - "8090:8081"

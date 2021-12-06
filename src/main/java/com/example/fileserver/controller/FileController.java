@@ -5,6 +5,7 @@ import com.example.fileserver.service.FileStorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -28,6 +29,8 @@ public class FileController {
 
     @Autowired
     private FileStorageService fileStorageService;
+    @Autowired
+    private Environment env;
 
     //file upload
     @PostMapping("/files")
@@ -103,5 +106,10 @@ public class FileController {
             e.printStackTrace();
         }
         return res;
+    }
+
+    @GetMapping("/health")
+    public String[] getHealth(HttpServletRequest request) {
+        return env.getActiveProfiles();
     }
 }
